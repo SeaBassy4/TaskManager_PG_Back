@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Task Manager Front</title>
+    <style>
+      body {
+        font-family: Arial;
+        padding: 20px;
+      }
+      .task {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 5px 0;
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Task Manager</h1>
+
+    <input type="text" id="taskInput" placeholder="Nombre de la tarea" />
+    <button onclick="createTask()">Agregar</button>
+
+    <div id="tasksContainer"></div>
+    <p id="noTasksMessage" style="display: none">No hay tareas disponibles.</p>
+
+    <script>
+      const API_URL = "http://localhost:3000/tasks";
+
+      // Cargar al iniciar
+      window.onload = fetchTasks;
+
+      async function fetchTasks() {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        renderTasks(data);
+      }
+
+      function renderTasks(tasks) {
+        const container = document.getElementById("tasksContainer");
+        const msg = document.getElementById("noTasksMessage");
+        container.innerHTML = "";
+
+        if (tasks.length === 0) {
+          msg.style.display = "block";
+        } else {
+          msg.style.display = "none";
+          tasks.forEach((task) => {
+            container.innerHTML += `
+                        <div class="task">
+                            ${task.title}
+                            <button onclick="deleteTask(${task.id})">Eliminar</button>
+                        </div>
+                    `;
+          });
+        }
+      }
+
+      async function createTask() {
+        const input = document.getElementById("taskInput");
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: input.value, completed: false }),
+        });
+        input.value = "";
+        fetchTasks();
+      }
+
+      async function deleteTask(id) {
+        await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        fetchTasks();
+      }
+    </script>
+  </body>
+</html>
